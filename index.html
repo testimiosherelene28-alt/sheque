@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Queueing System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="overlay"></div>
+    
+    <main class="queue-container">
+        <header class="queue-header">
+            <div class="logo">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>QueueFlow</span>
+            </div>
+            <p>Real-time Queue Management System</p>
+        </header>
+
+        <section class="display-card">
+            <h2><i class="fa-solid fa-bullhorn"></i> Now Serving</h2>
+            <div class="number-display pulse-animation" id="current-number">--</div>
+            <div class="counter-info">Go to Counter <span id="counter-id">1</span></div>
+        </section>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <i class="fa-solid fa-users"></i>
+                <div class="stat-details">
+                    <small>Next In Line</small>
+                    <strong id="next-number">--</strong>
+                </div>
+            </div>
+            <div class="stat-box">
+                <i class="fa-solid fa-clock"></i>
+                <div class="stat-details">
+                    <small>Total Waiting</small>
+                    <strong id="waiting-count">0</strong>
+                </div>
+            </div>
+        </div>
+
+        <section class="control-actions">
+            <button class="btn btn-primary" onclick="issueTicket()">
+                <i class="fa-solid fa-ticket"></i> Get Ticket
+            </button>
+            <button class="btn btn-success" onclick="callNext()">
+                <i class="fa-solid fa-forward"></i> Call Next
+            </button>
+            <button class="btn btn-danger" onclick="resetQueue()">
+                <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = 'api.php';
+
+        async function fetchQueue() {
+            try {
+                const res = await fetch(`${API_URL}?action=status`);
+                const data = await res.json();
+                
+                document.getElementById('current-number').innerText = data.current ? `#${data.current}` : '--';
+                document.getElementById('next-number').innerText = data.next ? `#${data.next}` : '--';
+                document.getElementById('waiting-count').innerText = data.waiting;
+            } catch (err) {
+                console.error("API Error: Ensure backend PHP server is running.", err);
+            }
+        }
+
+        async function issueTicket() {
+            await fetch(`${API_URL}?action=issue`, { method: 'POST' });
+            fetchQueue();
+        }
+
+        async function callNext() {
+            await fetch(`${API_URL}?action=next`, { method: 'POST' });
+            fetchQueue();
+        }
+
+        async function resetQueue() {
+            await fetch(`${API_URL}?action=reset`, { method: 'POST' });
+            fetchQueue();
+        }
+
+        // Poll API every 3 seconds for updates
+        setInterval(fetchQueue, 3000);
+        fetchQueue();
+    </script>
+</body>
+</html>

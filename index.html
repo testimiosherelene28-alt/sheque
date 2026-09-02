@@ -61,39 +61,47 @@
     </main>
 
     <script>
-        const API_URL = 'api.php';
+        // LocalStorage-based Queue Management (GitHub Pages Compatible)
+        function getQueueData() {
+            const data = localStorage.getItem('queueData');
+            return data ? JSON.parse(data) : { last_issued: 0, current: 0, queue: [] };
+        }
 
-        async function fetchQueue() {
-            try {
-                const res = await fetch(`${API_URL}?action=status`);
-                const data = await res.json();
-                
-                document.getElementById('current-number').innerText = data.current ? `#${data.current}` : '--';
-                document.getElementById('next-number').innerText = data.next ? `#${data.next}` : '--';
-                document.getElementById('waiting-count').innerText = data.waiting;
-            } catch (err) {
-                console.error("API Error: Ensure backend PHP server is running.", err);
+        function saveQueueData(data) {
+            localStorage.setItem('queueData', JSON.stringify(data));
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const data = getQueueData();
+            
+            document.getElementById('current-number').innerText = data.current ? `#${data.current}` : '--';
+            document.getElementById('next-number').innerText = data.queue.length > 0 ? `#${data.queue[0]}` : '--';
+            document.getElementById('waiting-count').innerText = data.queue.length;
+        }
+
+        function issueTicket() {
+            const data = getQueueData();
+            data.last_issued++;
+            data.queue.push(data.last_issued);
+            saveQueueData(data);
+        }
+
+        function callNext() {
+            const data = getQueueData();
+            if (data.queue.length > 0) {
+                data.current = data.queue.shift(); // Remove first in line and set as current
+                saveQueueData(data);
             }
         }
 
-        async function issueTicket() {
-            await fetch(`${API_URL}?action=issue`, { method: 'POST' });
-            fetchQueue();
+        function resetQueue() {
+            const initialData = { last_issued: 0, current: 0, queue: [] };
+            saveQueueData(initialData);
         }
 
-        async function callNext() {
-            await fetch(`${API_URL}?action=next`, { method: 'POST' });
-            fetchQueue();
-        }
-
-        async function resetQueue() {
-            await fetch(`${API_URL}?action=reset`, { method: 'POST' });
-            fetchQueue();
-        }
-
-        // Poll API every 3 seconds for live updates
-        setInterval(fetchQueue, 3000);
-        fetchQueue();
+        // Initialize display on page load
+        renderQueue();
     </script>
 </body>
 </html>

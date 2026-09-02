@@ -5,9 +5,10 @@ header('Access-Control-Allow-Methods: GET, POST');
 
 $dataFile = 'queue.json';
 
+// Initialize queue file if missing
 if (!file_exists($dataFile)) {
     $initialData = ['last_issued' => 0, 'current' => 0, 'queue' => []];
-    file_put_contents($dataFile, json_encode($initialData));
+    file_put_contents($dataFile, json_encode($initialData, JSON_PRETTY_PRINT));
 }
 
 $data = json_decode(file_get_contents($dataFile), true);
@@ -24,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'reset') {
         $data = ['last_issued' => 0, 'current' => 0, 'queue' => []];
     }
-    file_put_contents($dataFile, json_encode($data));
+    file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT));
 }
 
 $next = !empty($data['queue']) ? $data['queue'][0] : null;
